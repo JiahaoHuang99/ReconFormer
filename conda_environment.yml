@@ -1,4 +1,4 @@
-name: recon
+name: recon_former
 channels:
   - pytorch
   - anaconda

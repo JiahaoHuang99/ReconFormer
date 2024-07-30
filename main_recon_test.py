@@ -14,6 +14,10 @@ from models.Recurrent_Transformer import ReconFormer
 import pathlib
 from torch.utils.data import DataLoader
 
+import resource
+rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
+resource.setrlimit(resource.RLIMIT_NOFILE, (2048, rlimit[1]))
+
 if __name__ == '__main__':
     os.environ["HDF5_USE_FILE_LOCKING"] = 'FALSE'
     # parse args
@@ -44,7 +48,7 @@ if __name__ == '__main__':
         val_data_transform = DataTransform(args.resolution, args.challenge, mask, use_seed=True)
 
         if args.phase == 'test':
-            dataset_val = _create_dataset(path_dict[args.test_dataset]/args.sequence,val_data_transform, 'val', args.sequence, 8, False, 1.0)
+            dataset_val = _create_dataset(path_dict[args.test_dataset]/args.sequence,val_data_transform, 'val', args.sequence, 2, False, 1.0)
     else:
         exit('Error: unrecognized dataset')
 
@@ -73,9 +77,11 @@ if __name__ == '__main__':
 
     if args.phase == 'test':
         if len(args.gpu) > 1:
-            net.module.load_state_dict(torch.load(args.checkpoint))
+            pass
+            # net.module.load_state_dict(torch.load(args.checkpoint))
         else:
-            net.load_state_dict(torch.load(args.checkpoint))
+            pass
+            # net.load_state_dict(torch.load(args.checkpoint))
         print('Load checkpoint :', args.checkpoint)
         test_recon_save(net, dataset_val, args)
 

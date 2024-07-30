@@ -38,6 +38,11 @@ def ssim(gt, pred):
         gt.transpose(1, 2, 0), pred.transpose(1, 2, 0), multichannel=True, data_range = gt.max()
     )
 
+def ssim_slice(gt, pred):
+    """ Compute Structural Similarity Index Metric (SSIM). """
+    return structural_similarity(
+        gt, pred, multichannel=False, data_range = gt.max()
+    )
 
 METRIC_FUNCS = dict(
     MSE=mse,

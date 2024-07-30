@@ -9,6 +9,19 @@ import numpy as np
 import torch
 
 
+try:
+    from torch import irfft
+    from torch import rfft
+except ImportError:
+    from torch.fft import irfft2
+    from torch.fft import rfft2
+    def rfft(x, d):
+        t = rfft2(x, dim = (-d))
+        return torch.stack((t.real, t.imag), -1)
+    def irfft(x, d, signal_sizes):
+        return irfft2(torch.complex(x[:,:,0], x[:,:,1]), s = signal_sizes, dim = (-d))
+
+
 def to_tensor(data):
     """
     Convert numpy array to PyTorch tensor. For complex arrays, the real and imaginary parts
@@ -84,7 +97,12 @@ def fft2(data, normalized=True):
     """
     assert data.size(-1) == 2
     data = ifftshift(data, dim=(-3, -2))
-    data = torch.fft(data, 2, normalized=normalized)
+    # data = torch.fft(data, 2, normalized=normalized)
+
+    data = torch.view_as_complex(data)
+    data = torch.fft.fft2(data, dim=(-2, -1), norm='ortho' if normalized else 'backward')
+    data = torch.view_as_real(data)
+
     data = fftshift(data, dim=(-3, -2))
     return data
 
@@ -121,7 +139,12 @@ def ifft2(data, normalized=True):
     """
     assert data.size(-1) == 2
     data = ifftshift(data, dim=(-3, -2))
-    data = torch.ifft(data, 2, normalized=normalized)
+    # data = torch.ifft(data, 2, normalized=normalized)
+
+    data = torch.view_as_complex(data)
+    data = torch.fft.ifft2(data, dim=(-2, -1), norm='ortho' if normalized else 'backward')
+    data = torch.view_as_real(data)
+
     data = fftshift(data, dim=(-3, -2))
     return data
 

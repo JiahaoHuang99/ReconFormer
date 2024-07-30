@@ -81,7 +81,10 @@ def test_recon_save(net_g, data_loader, args):
 
             input = input.to(args.device)
             iter_data_time = time.time()
-            output = net_g(input, masked_kspace, mask)
+
+            # output = net_g(input, masked_kspace, mask)
+            output = input.clone()
+
             t_comp = (time.time() - iter_data_time)
             #print('itr time: ', t_comp)
 
@@ -123,6 +126,33 @@ def test_recon_save(net_g, data_loader, args):
             outputs_save[fname] = output
             targets_save[fname] = target
             input_save[fname] = input
+
+            new_output = output.copy()
+            new_target = target.copy()
+
+            # v_max = np.max(target)
+            # v_min = np.min(target)
+            # output = (output - v_min) / (v_max - v_min)
+            # target = (target - v_min) / (v_max - v_min)
+
+            for idx_slice in range(target.shape[0]):
+                output_slice = output[idx_slice]
+                target_slice = target[idx_slice]
+                input_slice = input[idx_slice]
+                v_max = np.max(target_slice)
+                v_min = np.min(target_slice)
+                output_slice = (output_slice - v_min) / (v_max - v_min)
+                target_slice = (target_slice - v_min) / (v_max - v_min)
+                new_output[idx_slice] = output_slice
+                new_target[idx_slice] = target_slice
+
+                # metrics['nmse'].append(evaluate.nmse(target_slice, output_slice))
+                # metrics['ssim'].append(evaluate.ssim_slice(target_slice, output_slice))
+                # metrics['psnr'].append(evaluate.psnr(target_slice, output_slice))
+
+            target = new_target
+            output = new_output
+
             metrics['nmse'].append(evaluate.nmse(target, output))
             metrics['ssim'].append(evaluate.ssim(target, output))
             metrics['psnr'].append(evaluate.psnr(target, output))
