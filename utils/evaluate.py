@@ -38,11 +38,69 @@ def ssim(gt, pred):
         gt.transpose(1, 2, 0), pred.transpose(1, 2, 0), multichannel=True, data_range = gt.max()
     )
 
+
+import torch
+
+
+def float2tensor3(img):
+
+    if img.ndim == 2:
+        img = np.expand_dims(img, axis=2)
+    return torch.from_numpy(np.ascontiguousarray(img)).permute(2, 0, 1).float()
+
+def lpips_case(lpips_func, gt, pred):
+
+    _lpips_list = []
+    for idx_slice in range(gt.shape[0]):
+        gt_slice = gt[idx_slice, :, :]
+        pred_slice = pred[idx_slice, :, :]
+        v_min = gt_slice.min()
+        v_max = gt_slice.max()
+        gt_slice = (gt_slice - v_min) / (v_max - v_min)
+        gt_slice = float2tensor3(gt_slice)
+        gt_slice = (gt_slice * 2 - 1)
+        pred_slice = (pred_slice - v_min) / (v_max - v_min)
+        pred_slice = float2tensor3(pred_slice)
+        pred_slice = (pred_slice * 2 - 1)
+        _lpips = lpips_func(gt_slice, pred_slice).data.squeeze().float().cpu().numpy()
+        _lpips_list.append(_lpips)
+
+    return _lpips_list
+
+
 def ssim_slice(gt, pred):
     """ Compute Structural Similarity Index Metric (SSIM). """
     return structural_similarity(
         gt, pred, multichannel=False, data_range = gt.max()
     )
+
+def calculate_psnr_single(img1, img2, data_range=None):
+
+    img1 = img1.astype(np.float64)
+    img2 = img2.astype(np.float64)
+    # gt recon
+    return peak_signal_noise_ratio(img1, img2, data_range=data_range)
+
+
+def calculate_ssim_single(img1, img2, data_range=None):
+
+    img1 = img1.astype(np.float64)
+    img2 = img2.astype(np.float64)
+
+    return structural_similarity(img1, img2, data_range=data_range)
+
+
+def calculate_lpips_single(lpips_func, img1, img2):
+
+    gt_slice = float2tensor3(img1)
+    gt_slice = (gt_slice * 2 - 1)
+
+    pred_slice = float2tensor3(img2)
+    pred_slice = (pred_slice * 2 - 1)
+    _lpips = lpips_func(gt_slice, pred_slice).data.squeeze().float().cpu().numpy()
+
+    return _lpips
+
 
 METRIC_FUNCS = dict(
     MSE=mse,

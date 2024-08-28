@@ -83,6 +83,12 @@ def apply_mask(data, mask_func, seed=None):
     return data * mask, mask
 
 
+def apply_mask_fixed(data, mask):
+
+    # data (320, 320, 2)
+    # mask (1, 320, 1)
+    return data * mask, mask
+
 def fft2(data, normalized=True):
     """
     Apply centered 2 dimensional Fast Fourier Transform.
